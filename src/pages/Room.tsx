@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CalendarDays, Check, HelpCircle, Moon, Share2, Sun, Trophy } from "lucide-react";
 import { FoundWords } from "@/components/FoundWords";
@@ -34,34 +34,42 @@ export function Room() {
   const [yesterday, setYesterday] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [theme, setTheme] = useState<Theme>(() => (typeof document === "undefined" ? "light" : getTheme()));
+  const inputRef = useRef<HTMLInputElement>(null);
+  const draftRef = useRef(draft);
+  const feedbackTimer = useRef<number>(0);
+  draftRef.current = draft;
 
+  const lettersKey = room?.puzzle.letters.join("") ?? "";
   useEffect(() => {
     if (room) setOuter(room.puzzle.letters.slice());
-  }, [room?.puzzle.center, room?.puzzle.letters.join("")]);
+  }, [room, room?.puzzle.center, lettersKey]);
+
+  function showFeedback(kind: "ok" | "bad", text: string) {
+    window.clearTimeout(feedbackTimer.current);
+    setFlash(kind);
+    setMessage(text);
+    feedbackTimer.current = window.setTimeout(() => {
+      setFlash(null);
+      setMessage(null);
+    }, 2200);
+  }
 
   useEffect(() => {
     if (!event) return;
     if (event.kind === "found") {
-      setFlash("ok");
       setDraft("");
-      setMessage(
+      showFeedback(
+        "ok",
         event.pangram
           ? `Pangram! ${formatWord(event.word)} +${event.points}${event.byYou ? "" : ` · ${event.playerName}`}`
           : `${formatWord(event.word)} +${event.points}${event.byYou ? "" : ` · ${event.playerName}`}`,
       );
     } else if (event.kind === "reject") {
-      setFlash("bad");
-      setMessage(REJECT_COPY[event.error]);
+      showFeedback("bad", REJECT_COPY[event.error]);
     } else {
-      setFlash("bad");
-      setMessage(event.message);
+      showFeedback("bad", event.message);
     }
-    const timer = window.setTimeout(() => {
-      setFlash(null);
-      setMessage(null);
-      setEvent(null);
-    }, 1600);
-    return () => window.clearTimeout(timer);
+    setEvent(null);
   }, [event, setEvent]);
 
   const letters = useMemo(
@@ -69,82 +77,36 @@ export function Room() {
     [room],
   );
 
+  function focusInput() {
+    inputRef.current?.focus();
+  }
+
   function addLetter(letter: string) {
-    if (draft.length >= 20) return;
-    setDraft((value) => value + letter);
+    setDraft((value) => (value.length >= 20 ? value : value + letter));
+    focusInput();
   }
 
   function trySubmit() {
     if (!room) return;
-    const word = draft.toLowerCase();
+    const word = draftRef.current.toLowerCase();
     const local = clientCheck(word, room.puzzle.center, letters);
     if (local) {
-      setFlash("bad");
-      setMessage(REJECT_COPY[local]);
-      window.setTimeout(() => {
-        setFlash(null);
-        setMessage(null);
-      }, 1400);
+      showFeedback("bad", REJECT_COPY[local]);
+      focusInput();
       return;
     }
     if (room.found.some((item) => item.word === word)) {
-      setFlash("bad");
-      setMessage(REJECT_COPY.already_found);
-      window.setTimeout(() => {
-        setFlash(null);
-        setMessage(null);
-      }, 1400);
+      showFeedback("bad", REJECT_COPY.already_found);
+      focusInput();
       return;
     }
     submit(word);
+    focusInput();
   }
 
   useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (!joinedName || !room) return;
-      const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.key === "Enter") {
-        event.preventDefault();
-        trySubmit();
-        return;
-      }
-      if (event.key === "Backspace") {
-        event.preventDefault();
-        setDraft((value) => value.slice(0, -1));
-        return;
-      }
-      if (event.key === " " || event.key === "Tab") {
-        event.preventDefault();
-        setOuter((current) => shuffleInPlace(current.slice()));
-        return;
-      }
-      const letter = event.key.toLowerCase();
-      if (letter.length === 1 && letters.has(letter)) {
-        event.preventDefault();
-        addLetter(letter);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
-
-  async function share() {
-    const url = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "Our Hive", text: `Join my hive (${code})`, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    }
-  }
+    if (room) focusInput();
+  }, [room?.code]);
 
   if (!joinedName.trim()) {
     return (
@@ -175,7 +137,7 @@ export function Room() {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 text-center">
         <h1 className="font-display text-4xl text-ink">Hive not found</h1>
-        <p className="mt-2 text-ink/65">{error ?? "That room code doesn’t exist."}</p>
+        <p className="mt-2 text-ink/65">{error ?? "That room code doesn’t exist. Create a new hive and send the fresh link."}</p>
         <Link to="/" className="mt-6 text-terracotta underline">
           Create a new hive
         </Link>
@@ -193,7 +155,7 @@ export function Room() {
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg px-4 py-3 pb-10">
+    <div className="mx-auto min-h-dvh max-w-lg px-4 py-3 pb-10" onClick={focusInput}>
       <header className="flex items-center justify-between gap-2">
         <Link to="/" className="font-display text-xl text-ink">
           Our Hive
@@ -222,7 +184,26 @@ export function Room() {
           <Button variant="ghost" size="sm" onClick={() => setHelp(true)} aria-label="How to play">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="outline" size="sm" onClick={share}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async (event) => {
+              event.stopPropagation();
+              const url = window.location.href;
+              try {
+                if (navigator.share) {
+                  await navigator.share({ title: "Our Hive", text: `Join my hive (${code})`, url });
+                  return;
+                }
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              } catch {
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+              }
+            }}
+          >
             {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
             {code}
           </Button>
@@ -244,23 +225,61 @@ export function Room() {
         <FoundWords room={room} youId={you?.id} />
       </div>
 
-      <p
-        className={cn(
-          "mt-6 min-h-10 text-center font-display text-3xl tracking-[0.2em] text-ink",
-          flash === "bad" && "shake text-terracotta",
-          flash === "ok" && "pop text-pine",
-        )}
-      >
-        {draft ? formatWord(draft) : <span className="tracking-normal text-ink/20"> </span>}
-      </p>
-      <p className="min-h-6 text-center text-sm font-medium text-pine">{message}</p>
+      <div className="mt-5">
+        <input
+          ref={inputRef}
+          value={formatWord(draft)}
+          autoCapitalize="characters"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          aria-label="Current word"
+          placeholder="Type or tap letters"
+          className={cn(
+            "h-12 w-full bg-transparent text-center font-display text-3xl tracking-[0.2em] text-ink outline-none placeholder:text-base placeholder:tracking-normal placeholder:text-ink/30",
+            flash === "bad" && "shake text-terracotta",
+            flash === "ok" && "pop text-pine",
+          )}
+          onChange={(event) => {
+            const next = event.target.value
+              .toLowerCase()
+              .replace(/[^a-z]/g, "")
+              .slice(0, 20);
+            setDraft([...next].filter((ch) => letters.has(ch)).join(""));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              trySubmit();
+            } else if (event.key === " ") {
+              event.preventDefault();
+              setOuter((current) => shuffleInPlace(current.slice()));
+            }
+          }}
+        />
+        <p
+          className={cn(
+            "min-h-6 text-center text-sm font-semibold",
+            flash === "bad" ? "text-terracotta" : "text-pine",
+          )}
+          role="status"
+        >
+          {message}
+        </p>
+      </div>
 
       <Honeycomb center={room.puzzle.center} letters={outer} onLetter={addLetter} />
 
       <GameControls
-        onDelete={() => setDraft((value) => value.slice(0, -1))}
+        onDelete={() => {
+          setDraft((value) => value.slice(0, -1));
+          focusInput();
+        }}
         onHint={() => setHints(true)}
-        onShuffle={() => setOuter((current) => shuffleInPlace(current.slice()))}
+        onShuffle={() => {
+          setOuter((current) => shuffleInPlace(current.slice()));
+          focusInput();
+        }}
         onEnter={trySubmit}
       />
 

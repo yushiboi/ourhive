@@ -79,17 +79,11 @@ export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProp
             <polygon
               points={hexPath(cx, cy, radius)}
               fill="transparent"
-              role="button"
-              tabIndex={disabled ? -1 : 0}
-              aria-label={cell.center ? `Center letter ${cell.letter}` : cell.letter}
               className="cursor-pointer"
-              onClick={() => !disabled && onLetter(cell.letter)}
-              onKeyDown={(event) => {
-                if (disabled) return;
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onLetter(cell.letter);
-                }
+              aria-label={cell.center ? `Center letter ${cell.letter}` : cell.letter}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                if (!disabled) onLetter(cell.letter);
               }}
             />
           </g>

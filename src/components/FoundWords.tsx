@@ -10,7 +10,7 @@ export function FoundWords({ room, youId }: { room: RoomPublic; youId?: string }
     count === 0 ? "Your words …" : `You have found ${count} ${count === 1 ? "word" : "words"}`;
 
   return (
-    <div className="relative mx-auto w-full max-w-md">
+    <div className="mx-auto w-full max-w-md">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -20,7 +20,7 @@ export function FoundWords({ room, youId }: { room: RoomPublic; youId?: string }
         <ChevronDown className={`h-4 w-4 text-ink/40 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-2xl border border-ink/10 bg-white p-3 shadow-lg dark:bg-paper">
+        <div className="mt-1 max-h-40 overflow-y-auto rounded-2xl border border-ink/10 bg-white p-3 dark:bg-paper">
           {count === 0 ? (
             <p className="px-1 py-2 text-sm text-ink/50">Words either of you find land here, with a name attached.</p>
           ) : (
