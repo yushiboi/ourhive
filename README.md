@@ -49,8 +49,9 @@ This is a single Node process: Vite/React/TypeScript UI plus an Express + `ws` s
 
 ### Preferred: Render Web Service
 
-1. Put the repo on GitHub (from the Origin project, use **Create repo** if you have not already).
-2. In [Render](https://render.com), **New → Web Service** and connect that GitHub repo.
+GitHub: [https://github.com/yushiboi/ourhive](https://github.com/yushiboi/ourhive). The repo includes a `render.yaml` Blueprint.
+
+1. In [Render](https://render.com), **New → Blueprint** and connect `yushiboi/ourhive`, **or** **New → Web Service** and connect that GitHub repo.
 3. Settings:
    - **Runtime:** Node
    - **Build command:** `npm install && npm run build`

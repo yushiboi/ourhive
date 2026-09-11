@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: our-hive
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render sets NODE_ENV=production before install; vite/tsx live in devDependencies.
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
