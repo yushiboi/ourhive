@@ -5,7 +5,7 @@ import express from "express";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { ClientMessage, PuzzleMode, ServerMessage } from "../shared/types.ts";
 import { store, words } from "./boot.ts";
-import { normalizeCode, sanitizeName, type Room } from "./rooms.ts";
+import { claimJoinPlayerId, normalizeCode, sanitizeName, type Room } from "./rooms.ts";
 
 type HiveSocket = WebSocket & {
   playerId?: string;
@@ -125,12 +125,13 @@ function handleMessage(socket: HiveSocket, data: string) {
       return;
     }
     if (socket.roomCode && socket.roomCode !== code && socket.playerId) {
-      store.detachSocket(socket.playerId);
+      store.detachSocket(socket.playerId, socket);
     }
-    const player = room.upsertPlayer(parsed.playerId, name, true);
+    const playerId = claimJoinPlayerId(room, parsed.playerId, name, (id) => store.hasOtherSocket(id, socket));
+    const player = room.upsertPlayer(playerId, name, true);
     socket.playerId = player.id;
     socket.roomCode = room.code;
-    store.attach(player.id, room.code);
+    store.attach(player.id, room.code, socket);
     send(socket, { type: "room", room: room.toPublic(), you: { id: player.id, name: player.name, connected: true } });
     broadcast(room, socket, { type: "presence", players: room.publicPlayers() });
     return;
@@ -172,7 +173,7 @@ wss.on("connection", (socket: HiveSocket) => {
   socket.on("close", () => {
     if (!socket.playerId || !socket.roomCode) return;
     const room = store.get(socket.roomCode);
-    store.detachSocket(socket.playerId);
+    store.detachSocket(socket.playerId, socket);
     if (room) broadcast(room, socket, { type: "presence", players: room.publicPlayers() });
   });
 });

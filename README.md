@@ -29,6 +29,12 @@ npm start
 3. Send the room link — or the 5-letter code — to your partner.
 4. Both of you type or tap letters. Valid words lock for everyone as soon as the first player submits them.
 
+### Two tabs in one browser
+
+Player ids live in `sessionStorage` (per tab) and survive refresh, so a real phone can reconnect as the same person. A second tab does **not** reuse that id — older builds kept a single `localStorage` id, so two tabs became one player and the second join overwrote the name (both clients then showed the second person as “you”).
+
+For a true two-person game, use two browsers, two devices, or two tabs (each tab will ask for a name). Do not expect two tabs to share one identity.
+
 ## Rules
 
 - 7 letters, one required center letter.

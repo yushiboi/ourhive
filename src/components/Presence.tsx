@@ -1,7 +1,15 @@
 import { playerColor } from "@/lib/utils";
 import type { PlayerPublic } from "@shared/types";
 
-export function Presence({ players, youId }: { players: PlayerPublic[]; youId?: string }) {
+export function Presence({
+  players,
+  youId,
+  youName,
+}: {
+  players: PlayerPublic[];
+  youId?: string;
+  youName?: string;
+}) {
   if (players.length === 0) {
     return <p className="text-sm text-ink/55">Waiting for players…</p>;
   }
@@ -20,7 +28,7 @@ export function Presence({ players, youId }: { players: PlayerPublic[]; youId?: 
             style={{ background: player.connected ? playerColor(player.id) : "#b9b2a3" }}
           />
           <span>
-            {player.id === youId ? `${player.name} (you)` : player.name}
+            {player.id === youId ? `${youName || player.name} (you)` : player.name}
             {!player.connected ? " · away" : ""}
           </span>
         </li>

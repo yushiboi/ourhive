@@ -141,6 +141,7 @@ export class Room {
 export class RoomStore {
   private readonly rooms = new Map<string, Room>();
   private readonly playerRoom = new Map<string, string>();
+  private readonly playerSockets = new Map<string, Set<object>>();
 
   constructor(private readonly words: DictWord[]) {}
 
@@ -163,15 +164,34 @@ export class RoomStore {
     return this.rooms.get(normalizeCode(code));
   }
 
-  attach(playerId: string, code: string) {
+  attach(playerId: string, code: string, socket?: object) {
     this.playerRoom.set(playerId, normalizeCode(code));
+    if (!socket) return;
+    const sockets = this.playerSockets.get(playerId) ?? new Set<object>();
+    sockets.add(socket);
+    this.playerSockets.set(playerId, sockets);
   }
 
-  detachSocket(playerId: string) {
+  detachSocket(playerId: string, socket?: object) {
     const code = this.playerRoom.get(playerId);
     if (!code) return;
     const room = this.rooms.get(code);
+    if (socket) {
+      const sockets = this.playerSockets.get(playerId);
+      sockets?.delete(socket);
+      if (sockets && sockets.size > 0) {
+        room?.setConnected(playerId, true);
+        return;
+      }
+    }
     room?.setConnected(playerId, false);
+  }
+
+  hasOtherSocket(playerId: string, socket: object): boolean {
+    const sockets = this.playerSockets.get(playerId);
+    if (!sockets || sockets.size === 0) return false;
+    if (sockets.size === 1 && sockets.has(socket)) return false;
+    return true;
   }
 
   roomForPlayer(playerId: string): Room | undefined {
@@ -185,7 +205,10 @@ export class RoomStore {
       if (now - room.lastActivity > ROOM_TTL_MS) {
         this.rooms.delete(code);
         for (const [playerId, playerCode] of this.playerRoom) {
-          if (playerCode === code) this.playerRoom.delete(playerId);
+          if (playerCode === code) {
+            this.playerRoom.delete(playerId);
+            this.playerSockets.delete(playerId);
+          }
         }
       }
     }
@@ -202,4 +225,35 @@ export function normalizeCode(raw: string): string {
 
 export function newPlayerId(): string {
   return nanoid(12);
+}
+
+/** Client-supplied ids; reject empty/short/odd values so they cannot collide. */
+export function normalizePlayerId(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const id = raw.trim();
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(id)) return undefined;
+  return id;
+}
+
+export function resolveJoinPlayerId(raw: unknown): string {
+  return normalizePlayerId(raw) ?? newPlayerId();
+}
+
+/**
+ * Reusing a live player id with a *different* name is a second person (or a
+ * second tab), not a refresh. Mint a new id so they cannot take over the first.
+ */
+export function claimJoinPlayerId(
+  room: Room,
+  rawId: unknown,
+  name: string,
+  isIdLiveOnOtherSocket: (id: string) => boolean,
+): string {
+  const requested = resolveJoinPlayerId(rawId);
+  const existing = room.players.get(requested);
+  const incoming = sanitizeName(name);
+  if (existing && incoming && incoming !== existing.name && isIdLiveOnOtherSocket(requested)) {
+    return newPlayerId();
+  }
+  return requested;
 }
