@@ -1,18 +1,12 @@
-import { fromSpellbee, loadDailyCatalog, puzzleStats } from "./spellbee.ts";
+import { dateKeyInZone } from "../shared/game.ts";
+import { loadDictionary } from "./dictionary.ts";
+import { dailyPuzzle, freshPuzzle, puzzleStats } from "./puzzle.ts";
 import { RoomStore } from "./rooms.ts";
 
-export const store = new RoomStore();
+export const words = loadDictionary();
+export const store = new RoomStore(words);
 
-loadDailyCatalog()
-  .then((dates) => {
-    const days = Object.keys(dates).sort();
-    console.log(`Spellbee published days: ${days.join(", ") || "(none)"}`);
-    const latestDay = days.at(-1);
-    const latest = latestDay ? dates[latestDay] : undefined;
-    if (latestDay && latest) {
-      console.log("Latest hive", puzzleStats(fromSpellbee(latest, "daily", latestDay)));
-    }
-  })
-  .catch((err: unknown) => {
-    console.warn("Could not prefetch Spellbee dailies:", err);
-  });
+console.log(`Open word list ready: ${words.length.toLocaleString()} playable words`);
+const today = dailyPuzzle(words, dateKeyInZone("UTC"));
+console.log("Today's hive", puzzleStats(today));
+console.log("Sample fresh hive", puzzleStats(freshPuzzle(words)));

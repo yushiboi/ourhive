@@ -1,16 +1,31 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
-  --color-cream: #f7f0df;
-  --color-paper: #fff9ee;
-  --color-ink: #1a2e22;
-  --color-honey: #e8b84a;
-  --color-honey-ink: #5a3a08;
-  --color-comb: #f5d76e;
+  --color-cream: #f7f1e4;
+  --color-paper: #fffdf8;
+  --color-ink: #1c1c1c;
+  --color-honey: #f0c94a;
+  --color-honey-ink: #3f2c08;
+  --color-comb: #f6d56a;
   --color-pine: #2f5d3a;
   --color-terracotta: #c45c26;
+  --color-cell: #e7e4dc;
+}
+
+.dark {
+  --color-cream: #161410;
+  --color-paper: #1f1c16;
+  --color-ink: #f3eee3;
+  --color-honey: #e8b84a;
+  --color-honey-ink: #3d2806;
+  --color-comb: #f0c94a;
+  --color-pine: #9ec9a6;
+  --color-terracotta: #e07a45;
+  --color-cell: #2a2721;
 }
 
 html,
@@ -21,10 +36,7 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(1200px 500px at 10% -10%, rgba(232, 184, 74, 0.28), transparent 55%),
-    radial-gradient(900px 400px at 100% 0%, rgba(47, 93, 58, 0.12), transparent 50%),
-    var(--color-cream);
+  background: var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
@@ -33,12 +45,8 @@ body {
   font-family: var(--font-display);
 }
 
-.hive-cell polygon:last-of-type {
-  cursor: pointer;
-}
-
 .hive-cell:hover polygon:first-of-type {
-  filter: brightness(1.04);
+  filter: brightness(0.97);
 }
 
 @keyframes shake {

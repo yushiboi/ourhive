@@ -32,10 +32,10 @@ type HoneycombProps = {
 };
 
 export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProps) {
-  const size = 46;
-  const radius = 42;
-  const width = size * SQRT3 * 3 + 16;
-  const height = size * 4.2 + 8;
+  const size = 48;
+  const radius = 44;
+  const width = size * SQRT3 * 3 + 8;
+  const height = size * 4.2;
   const ox = width / 2;
   const oy = height / 2;
 
@@ -50,7 +50,7 @@ export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProp
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="mx-auto w-[min(100%,22rem)] select-none"
+      className="mx-auto w-[min(100%,20.5rem)] select-none"
       role="group"
       aria-label="Letter hive"
     >
@@ -62,28 +62,27 @@ export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProp
           <g key={`${cell.q}:${cell.r}:${cell.letter}`} className="hive-cell">
             <polygon
               points={hexPath(cx, cy, radius)}
-              fill={cell.center ? "#e8b84a" : "#fff9ee"}
-              stroke={cell.center ? "#5a3a08" : "#2f5d3a"}
-              strokeOpacity={cell.center ? 0.25 : 0.2}
-              strokeWidth={2}
+              className={cell.center ? "fill-honey" : "fill-cell"}
             />
             <text
               x={cx}
               y={cy + 2}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="pointer-events-none font-display font-bold"
-              fontSize={28}
-              fill={cell.center ? "#5a3a08" : "#1a2e22"}
+              className={`pointer-events-none ${cell.center ? "fill-honey-ink" : "fill-ink"}`}
+              fontSize={26}
+              fontWeight={700}
+              fontFamily="Outfit, system-ui, sans-serif"
             >
               {cell.letter.toUpperCase()}
             </text>
             <polygon
               points={hexPath(cx, cy, radius)}
-              className="fill-transparent stroke-transparent"
+              fill="transparent"
               role="button"
               tabIndex={disabled ? -1 : 0}
               aria-label={cell.center ? `Center letter ${cell.letter}` : cell.letter}
+              className="cursor-pointer"
               onClick={() => !disabled && onLetter(cell.letter)}
               onKeyDown={(event) => {
                 if (disabled) return;

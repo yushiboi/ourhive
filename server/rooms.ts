@@ -7,8 +7,10 @@ import type {
   RankName,
   RoomPublic,
   SubmitError,
+  YesterdayPublic,
 } from "../shared/types.ts";
-import { loadPuzzle, publicPuzzle, type Puzzle } from "./puzzle.ts";
+import { loadPuzzle, publicPuzzle, publicYesterday, shiftDateKey, type Puzzle } from "./puzzle.ts";
+import type { DictWord } from "./dictionary.ts";
 
 const roomCode = customAlphabet("ACDEFGHJKMNPQRTUVWXY", 5);
 const ROOM_TTL_MS = 1000 * 60 * 60 * 24;
@@ -29,13 +31,15 @@ export class Room {
   readonly createdAt = Date.now();
   lastActivity = Date.now();
   readonly puzzle: Puzzle;
+  readonly yesterday?: YesterdayPublic;
   readonly found = new Map<string, FoundWord>();
   readonly players = new Map<string, Player>();
   score = 0;
 
-  constructor(code: string, puzzle: Puzzle) {
+  constructor(code: string, puzzle: Puzzle, yesterday?: YesterdayPublic) {
     this.code = code;
     this.puzzle = puzzle;
+    this.yesterday = yesterday;
   }
 
   get rank(): RankName {
@@ -119,6 +123,7 @@ export class Room {
       geniusScore: this.puzzle.rankings.genius,
       queenBee: this.queenBee,
       players: this.publicPlayers(),
+      yesterday: this.yesterday,
     };
   }
 
@@ -137,17 +142,19 @@ export class RoomStore {
   private readonly rooms = new Map<string, Room>();
   private readonly playerRoom = new Map<string, string>();
 
-  async create(opts: {
-    mode: PuzzleMode;
-    timeZone?: string;
-    date?: string;
-    spellbeeCode?: string;
-  }): Promise<Room> {
+  constructor(private readonly words: DictWord[]) {}
+
+  async create(opts: { mode: PuzzleMode; timeZone?: string; date?: string }): Promise<Room> {
     this.gc();
-    const puzzle = await loadPuzzle(opts);
+    const puzzle = loadPuzzle(this.words, opts);
+    let yesterday: YesterdayPublic | undefined;
+    if (puzzle.mode === "daily" && puzzle.dateKey) {
+      const prior = loadPuzzle(this.words, { mode: "daily", date: shiftDateKey(puzzle.dateKey, -1) });
+      yesterday = publicYesterday(prior);
+    }
     let code = roomCode();
     while (this.rooms.has(code)) code = roomCode();
-    const room = new Room(code, puzzle);
+    const room = new Room(code, puzzle, yesterday);
     this.rooms.set(code, room);
     return room;
   }

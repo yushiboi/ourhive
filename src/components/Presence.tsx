@@ -12,7 +12,7 @@ export function Presence({ players, youId }: { players: PlayerPublic[]; youId?: 
         <li
           key={player.id}
           className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm ${
-            player.connected ? "border-ink/10 bg-white/80" : "border-ink/8 bg-white/40 text-ink/45"
+            player.connected ? "border-ink/10 bg-white/80 dark:bg-paper" : "border-ink/8 bg-white/40 text-ink/45 dark:bg-paper/50"
           }`}
         >
           <span

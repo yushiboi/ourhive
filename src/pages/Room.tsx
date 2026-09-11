@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Check, Delete, HelpCircle, Share2, Shuffle } from "lucide-react";
+import { CalendarDays, Check, HelpCircle, Moon, Share2, Sun, Trophy } from "lucide-react";
 import { FoundWords } from "@/components/FoundWords";
+import { GameControls } from "@/components/GameControls";
+import { HintPanel } from "@/components/HintPanel";
 import { Honeycomb } from "@/components/Honeycomb";
 import { HowToPlay } from "@/components/HowToPlay";
 import { Presence } from "@/components/Presence";
-import { ProgressRail } from "@/components/ProgressRail";
+import { RankBar } from "@/components/RankBar";
+import { RankingsPanel } from "@/components/RankingsPanel";
+import { YesterdayPanel } from "@/components/YesterdayPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useHiveSocket } from "@/hooks/useHiveSocket";
 import { getStoredName, storeName } from "@/lib/player";
+import { applyTheme, getTheme, toggleTheme, type Theme } from "@/lib/theme";
 import { cn, formatWord } from "@/lib/utils";
 import { REJECT_COPY } from "@shared/types";
 import { clientCheck, hiveLetterSet, shuffleInPlace } from "@shared/game";
@@ -24,7 +29,11 @@ export function Room() {
   const [flash, setFlash] = useState<"ok" | "bad" | null>(null);
   const [copied, setCopied] = useState(false);
   const [help, setHelp] = useState(false);
+  const [hints, setHints] = useState(false);
+  const [ranks, setRanks] = useState(false);
+  const [yesterday, setYesterday] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>(() => (typeof document === "undefined" ? "light" : getTheme()));
 
   useEffect(() => {
     if (room) setOuter(room.puzzle.letters.slice());
@@ -178,72 +187,87 @@ export function Room() {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 text-center">
         <p className="font-display text-3xl text-ink">Connecting to the hive…</p>
-        <p className="mt-2 text-ink/60">Syncing Spellbee letters and the shared word list.</p>
+        <p className="mt-2 text-ink/60">Syncing letters and the shared word list.</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-5xl px-4 py-4 pb-10 lg:grid lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-8 lg:py-8">
-      <div>
-        <header className="flex items-center justify-between gap-2">
-          <Link to="/" className="font-display text-2xl text-ink">
-            Our Hive
-          </Link>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setHelp(true)} aria-label="How to play">
-              <HelpCircle className="h-5 w-5" />
+    <div className="mx-auto min-h-dvh max-w-lg px-4 py-3 pb-10">
+      <header className="flex items-center justify-between gap-2">
+        <Link to="/" className="font-display text-xl text-ink">
+          Our Hive
+        </Link>
+        <div className="flex items-center gap-0.5">
+          {room.mode === "daily" && (
+            <Button variant="ghost" size="sm" aria-label="Yesterday" onClick={() => setYesterday(true)}>
+              <CalendarDays className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="sm" onClick={share}>
-              {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-              {code}
-            </Button>
-          </div>
-        </header>
-
-        <p className="mt-2 text-sm text-ink/55">
-          {room.mode === "daily" ? "Today’s Spellbee" : room.mode === "archive" ? "Spellbee archive" : "Spellbee hive"}
-          {room.dateKey ? ` · ${room.dateKey}` : ""} · center {room.puzzle.center.toUpperCase()}
-        </p>
-
-        <div className="mt-3">
-          <Presence players={room.players} youId={you?.id} />
-        </div>
-        <div className="mt-4">
-          <ProgressRail room={room} />
-        </div>
-
-        <p
-          className={cn(
-            "mt-5 min-h-12 text-center font-display text-3xl tracking-[0.18em] text-ink",
-            flash === "bad" && "shake text-terracotta",
-            flash === "ok" && "pop text-pine",
           )}
-        >
-          {draft ? formatWord(draft) : <span className="tracking-normal text-ink/25">Type or tap letters</span>}
-        </p>
-        <p className="min-h-6 text-center text-sm font-medium text-pine">{message}</p>
-
-        <Honeycomb center={room.puzzle.center} letters={outer} onLetter={addLetter} />
-
-        <div className="mt-4 flex items-center justify-center gap-3">
-          <Button variant="hive" size="icon" aria-label="Delete" onClick={() => setDraft((value) => value.slice(0, -1))}>
-            <Delete className="h-6 w-6" />
+          <Button variant="ghost" size="sm" aria-label="Rankings" onClick={() => setRanks(true)}>
+            <Trophy className="h-5 w-5" />
           </Button>
-          <Button variant="hive" size="icon" aria-label="Shuffle" onClick={() => setOuter((current) => shuffleInPlace(current.slice()))}>
-            <Shuffle className="h-6 w-6" />
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Toggle dark mode"
+            onClick={() => {
+              const next = toggleTheme();
+              applyTheme(next);
+              setTheme(next);
+            }}
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Button size="lg" onClick={trySubmit}>
-            Enter
+          <Button variant="ghost" size="sm" onClick={() => setHelp(true)} aria-label="How to play">
+            <HelpCircle className="h-5 w-5" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={share}>
+            {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {code}
           </Button>
         </div>
-        <p className="mt-3 hidden text-center text-xs text-ink/45 sm:block">Keyboard: letters, Backspace, Enter, Space to shuffle.</p>
+      </header>
+
+      <p className="mt-2 text-center text-xs font-medium uppercase tracking-[0.16em] text-ink/45">
+        {room.mode === "daily" ? `Today · ${room.dateKey}` : "Shared hive"}
+      </p>
+      <div className="mt-2 flex justify-center">
+        <Presence players={room.players} youId={you?.id} />
       </div>
 
-      <div className="mt-8 lg:mt-0">
+      <div className="mt-4">
+        <RankBar room={room} onOpenRanks={() => setRanks(true)} />
+      </div>
+
+      <div className="mt-4">
         <FoundWords room={room} youId={you?.id} />
       </div>
+
+      <p
+        className={cn(
+          "mt-6 min-h-10 text-center font-display text-3xl tracking-[0.2em] text-ink",
+          flash === "bad" && "shake text-terracotta",
+          flash === "ok" && "pop text-pine",
+        )}
+      >
+        {draft ? formatWord(draft) : <span className="tracking-normal text-ink/20"> </span>}
+      </p>
+      <p className="min-h-6 text-center text-sm font-medium text-pine">{message}</p>
+
+      <Honeycomb center={room.puzzle.center} letters={outer} onLetter={addLetter} />
+
+      <GameControls
+        onDelete={() => setDraft((value) => value.slice(0, -1))}
+        onHint={() => setHints(true)}
+        onShuffle={() => setOuter((current) => shuffleInPlace(current.slice()))}
+        onEnter={trySubmit}
+      />
+
       <HowToPlay open={help} onClose={() => setHelp(false)} />
+      <HintPanel open={hints} onClose={() => setHints(false)} hints={room.puzzle.hints} />
+      <RankingsPanel open={ranks} onClose={() => setRanks(false)} room={room} />
+      <YesterdayPanel open={yesterday} onClose={() => setYesterday(false)} yesterday={room.yesterday} />
     </div>
   );
 }

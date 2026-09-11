@@ -11,7 +11,7 @@ const buttonVariants = cva(
         honey: "bg-honey text-ink hover:bg-comb",
         outline: "border border-ink/15 bg-white/70 text-ink hover:bg-white",
         ghost: "text-ink/80 hover:bg-ink/5",
-        hive: "border-2 border-pine/20 bg-paper text-ink hover:border-pine/40",
+        enter: "bg-ink text-cream hover:bg-ink/90",
       },
       size: {
         default: "h-12 px-5 text-base",

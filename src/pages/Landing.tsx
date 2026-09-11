@@ -1,26 +1,19 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Hexagon, HelpCircle } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createRoom, listPublishedDays, type PublishedDay } from "@/lib/api";
+import { createRoom } from "@/lib/api";
 import { getStoredName, storeName } from "@/lib/player";
 
 export function Landing() {
   const navigate = useNavigate();
   const [name, setName] = useState(getStoredName);
   const [joinCode, setJoinCode] = useState("");
-  const [days, setDays] = useState<PublishedDay[]>([]);
-  const [busy, setBusy] = useState<"daily" | "fresh" | "archive" | "join" | null>(null);
+  const [busy, setBusy] = useState<"daily" | "fresh" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [help, setHelp] = useState(false);
-
-  useEffect(() => {
-    listPublishedDays()
-      .then(setDays)
-      .catch(() => setDays([]));
-  }, []);
 
   function requireName() {
     const trimmed = name.trim();
@@ -32,12 +25,12 @@ export function Landing() {
     return trimmed;
   }
 
-  async function start(mode: "daily" | "fresh", date?: string) {
+  async function start(mode: "daily" | "fresh") {
     if (!requireName()) return;
-    setBusy(date ? "archive" : mode);
+    setBusy(mode);
     setError(null);
     try {
-      const room = await createRoom({ mode: date ? "archive" : mode, date });
+      const room = await createRoom(mode);
       navigate(room.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not open a hive");
@@ -68,7 +61,7 @@ export function Landing() {
           </p>
           <h1 className="mt-2 font-display text-4xl leading-tight text-ink">Spell together on FaceTime.</h1>
           <p className="mt-2 text-ink/70">
-            Two phones, one Spellbee hive, one score. Words either of you find lock for both of you.
+            Two phones, one hive, one score. You each keep your own letters and keyboard — every word either of you finds locks for both.
           </p>
         </div>
         <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => setHelp(true)} aria-label="How to play">
@@ -90,44 +83,14 @@ export function Landing() {
 
       <div className="mt-6 grid gap-3">
         <Button size="lg" disabled={busy !== null} onClick={() => start("daily")}>
-          {busy === "daily" ? "Opening today’s hive…" : "Play today’s Spellbee"}
+          {busy === "daily" ? "Opening today’s hive…" : "Play today’s hive"}
         </Button>
         <Button variant="honey" size="lg" disabled={busy !== null} onClick={() => start("fresh")}>
-          {busy === "fresh" ? "Finding a hive…" : "Play another Spellbee hive"}
+          {busy === "fresh" ? "Building a hive…" : "Play a new hive"}
         </Button>
       </div>
 
-      {days.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-pine/80">Published days</h2>
-          <p className="mt-1 text-sm text-ink/60">Same letter sets Spellbee is showing right now.</p>
-          <ul className="mt-3 grid gap-2">
-            {days
-              .slice()
-              .reverse()
-              .map((day) => (
-                <li key={day.date}>
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => start("daily", day.date)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-white/70 px-4 py-3 text-left hover:border-pine/30"
-                  >
-                    <span>
-                      <span className="block font-medium">{day.date}</span>
-                      <span className="text-sm text-ink/55">
-                        Center {day.center.toUpperCase()} · {day.wordCount} words
-                      </span>
-                    </span>
-                    <span className="font-mono text-sm tracking-widest text-pine">{day.code}</span>
-                  </button>
-                </li>
-              ))}
-          </ul>
-        </section>
-      )}
-
-      <form onSubmit={join} className="mt-8 rounded-3xl border border-ink/8 bg-white/60 p-4">
+      <form onSubmit={join} className="mt-8 rounded-3xl border border-ink/8 bg-white/60 p-4 dark:bg-paper">
         <h2 className="font-display text-2xl text-ink">Join a room</h2>
         <p className="mt-1 text-sm text-ink/60">Ask your partner for the 5-letter code, or open their link.</p>
         <div className="mt-3 flex gap-2">

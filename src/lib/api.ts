@@ -1,15 +1,11 @@
 import type { PuzzleMode } from "@shared/types";
 
-export async function createRoom(opts: {
-  mode: PuzzleMode;
-  date?: string;
-  spellbeeCode?: string;
-}): Promise<{ code: string; url: string; mode: PuzzleMode; dateKey?: string }> {
+export async function createRoom(mode: PuzzleMode): Promise<{ code: string; url: string; mode: PuzzleMode; dateKey?: string }> {
   const res = await fetch("/api/rooms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ...opts,
+      mode,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
   });
@@ -23,13 +19,4 @@ export async function peekRoom(code: string): Promise<{ exists: boolean; players
   if (res.status === 404) return { exists: false };
   if (!res.ok) throw new Error("Could not look up hive");
   return res.json();
-}
-
-export type PublishedDay = { date: string; code: string; center: string; wordCount: number };
-
-export async function listPublishedDays(): Promise<PublishedDay[]> {
-  const res = await fetch("/api/puzzles");
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || "Could not load Spellbee days");
-  return body.dates ?? [];
 }

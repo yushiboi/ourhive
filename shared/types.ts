@@ -13,9 +13,31 @@ export const RANKS = [
 export type RankName = (typeof RANKS)[number]["name"];
 export type RankKey = (typeof RANKS)[number]["key"];
 
-export type PuzzleMode = "fresh" | "daily" | "archive";
+export type PuzzleMode = "fresh" | "daily";
 
 export type Rankings = Record<RankKey, number>;
+
+/** Scaled from Spellbee-style rank breakpoints (e.g. 12/27/46…/380) so Genius = max score. */
+export const RANK_PCTS: Record<RankKey, number> = {
+  beginner: 0,
+  novice: 0.032,
+  okay: 0.071,
+  good: 0.121,
+  solid: 0.232,
+  nice: 0.35,
+  great: 0.561,
+  amazing: 0.721,
+  genius: 1,
+};
+
+export type HiveHints = {
+  totalWords: number;
+  maxScore: number;
+  pangrams: number;
+  byLength: { length: number; count: number }[];
+  byStart: { letter: string; count: number }[];
+  prefixes: { prefix: string; count: number }[];
+};
 
 export type PuzzlePublic = {
   letters: string[];
@@ -23,8 +45,16 @@ export type PuzzlePublic = {
   wordCount: number;
   pangramCount: number;
   maxScore: number;
-  spellbeeCode: string;
-  sourceDate?: string;
+  hints: HiveHints;
+};
+
+export type YesterdayPublic = {
+  date: string;
+  center: string;
+  letters: string[];
+  words: string[];
+  pangrams: string[];
+  maxScore: number;
 };
 
 export type FoundWord = {
@@ -54,6 +84,7 @@ export type RoomPublic = {
   geniusScore: number;
   queenBee: boolean;
   players: PlayerPublic[];
+  yesterday?: YesterdayPublic;
 };
 
 export type SubmitError =

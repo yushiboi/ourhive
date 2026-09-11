@@ -1,38 +1,40 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
-import { isPangram, scoreWord } from "../shared/game.ts";
-import { fromSpellbee, type SpellbeeGame } from "./spellbee.ts";
+import { hashString, isPangram, mulberry32, scoreWord } from "../shared/game.ts";
+import { loadDictionary } from "./dictionary.ts";
+import { generatePuzzle } from "./puzzle.ts";
 
-const fixture = JSON.parse(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "data", "fixtures", "spellbee-game.json"), "utf8"),
-) as SpellbeeGame;
+const words = loadDictionary();
 
-describe("spellbee puzzle import", () => {
-  it("uses Spellbee letters, center, and answer list", () => {
-    const puzzle = fromSpellbee(fixture, "daily", "2026-01-15");
-    assert.equal(puzzle.source, "spellbee");
-    assert.equal(puzzle.center, "l");
-    assert.equal(puzzle.letters.length, 6);
-    assert.ok(!puzzle.letters.includes("l"));
-    assert.equal(puzzle.answers.size, fixture.data.dictionary.length);
-    assert.ok(puzzle.answers.has("central"));
-    assert.equal(puzzle.answers.get("central")?.pangram, true);
-    assert.equal(puzzle.rankings.genius, 36);
+describe("puzzle generation", () => {
+  it("builds hives with a pangram and a healthy word list", () => {
+    for (let i = 0; i < 3; i++) {
+      const puzzle = generatePuzzle(words, mulberry32(hashString(`test-${i}`)), "fresh");
+      assert.equal(puzzle.hive.length, 7);
+      assert.equal(new Set(puzzle.hive).size, 7);
+      assert.ok(!puzzle.hive.includes("s"), "hives omit S");
+      assert.ok(puzzle.answers.size >= 15, `too few words: ${puzzle.answers.size}`);
+      assert.ok(puzzle.pangramCount >= 1);
+      assert.equal(puzzle.rankings.genius, puzzle.maxScore);
+      assert.ok(puzzle.hints.totalWords === puzzle.answers.size);
+      let recomputed = 0;
+      for (const [word, entry] of puzzle.answers) {
+        assert.ok(word.includes(puzzle.center), word);
+        assert.ok([...word].every((ch) => puzzle.hive.includes(ch)), word);
+        const scored = scoreWord(word, puzzle.hive);
+        assert.equal(entry.points, scored.points);
+        assert.equal(entry.pangram, isPangram(word, puzzle.hive));
+        recomputed += entry.points;
+      }
+      assert.equal(puzzle.maxScore, recomputed);
+    }
   });
 
-  it("scores imported words with Spelling Bee rules", () => {
-    const puzzle = fromSpellbee(fixture, "archive", "2026-01-15");
-    const hive = puzzle.hive;
-    let total = 0;
-    for (const [word, entry] of puzzle.answers) {
-      const scored = scoreWord(word, hive);
-      assert.equal(entry.pangram, isPangram(word, hive));
-      assert.equal(entry.points, scored.points);
-      total += entry.points;
-    }
-    assert.equal(puzzle.maxScore, total);
+  it("is deterministic for a daily seed", () => {
+    const a = generatePuzzle(words, mulberry32(hashString("our-hive-daily:2026-09-11")), "daily", "2026-09-11");
+    const b = generatePuzzle(words, mulberry32(hashString("our-hive-daily:2026-09-11")), "daily", "2026-09-11");
+    assert.equal(a.center, b.center);
+    assert.deepEqual(a.letters, b.letters);
+    assert.equal(a.answers.size, b.answers.size);
   });
 });

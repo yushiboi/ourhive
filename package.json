@@ -9,7 +9,7 @@
     "dev:client": "vite",
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
-    "test": "tsx --test shared/game.test.ts server/puzzle.test.ts server/room.test.ts server/spellbee.live.test.ts",
+    "test": "tsx --test shared/game.test.ts server/puzzle.test.ts server/room.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

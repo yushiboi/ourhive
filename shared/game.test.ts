@@ -1,23 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { clientCheck, isPangram, rankForScore, scoreWord } from "./game.ts";
-import type { Rankings } from "./types.ts";
+import {
+  clientCheck,
+  isPangram,
+  rankForScore,
+  rankingsFromMax,
+  scoreWord,
+} from "./game.ts";
 
 const hive = ["a", "c", "e", "l", "n", "r", "t"];
 const center = "a";
 const letters = new Set(hive);
-
-const rankings: Rankings = {
-  beginner: 0,
-  novice: 2,
-  okay: 5,
-  good: 8,
-  solid: 15,
-  nice: 25,
-  great: 40,
-  amazing: 60,
-  genius: 100,
-};
 
 describe("scoring", () => {
   it("awards 1 point for four-letter words", () => {
@@ -35,12 +28,20 @@ describe("scoring", () => {
 });
 
 describe("ranks", () => {
-  it("uses Spellbee absolute thresholds", () => {
-    assert.equal(rankForScore(0, rankings), "Beginner");
-    assert.equal(rankForScore(2, rankings), "Novice");
-    assert.equal(rankForScore(8, rankings), "Good");
-    assert.equal(rankForScore(60, rankings), "Amazing");
-    assert.equal(rankForScore(100, rankings), "Genius");
+  it("scales Spellbee-style breakpoints against max score", () => {
+    const rankings = rankingsFromMax(380);
+    assert.equal(rankings.beginner, 0);
+    assert.equal(rankings.novice, 12);
+    assert.equal(rankings.okay, 27);
+    assert.equal(rankings.good, 46);
+    assert.equal(rankings.solid, 88);
+    assert.equal(rankings.nice, 133);
+    assert.equal(rankings.great, 213);
+    assert.equal(rankings.amazing, 274);
+    assert.equal(rankings.genius, 380);
+    assert.equal(rankForScore(1, rankings), "Beginner");
+    assert.equal(rankForScore(12, rankings), "Novice");
+    assert.equal(rankForScore(380, rankings), "Genius");
   });
 });
 

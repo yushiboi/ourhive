@@ -4,9 +4,8 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { ClientMessage, PuzzleMode, ServerMessage } from "../shared/types.ts";
-import { store } from "./boot.ts";
+import { store, words } from "./boot.ts";
 import { normalizeCode, sanitizeName, type Room } from "./rooms.ts";
-import { loadDailyCatalog } from "./spellbee.ts";
 
 type HiveSocket = WebSocket & {
   playerId?: string;
@@ -21,48 +20,24 @@ const app = express();
 app.use(express.json({ limit: "32kb" }));
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, source: "spellbee.org" });
-});
-
-app.get("/api/puzzles", async (_req, res) => {
-  try {
-    const dates = await loadDailyCatalog();
-    res.json({
-      source: "spellbee.org",
-      dates: Object.keys(dates)
-        .sort()
-        .map((date) => ({
-          date,
-          code: dates[date]!.data.code,
-          center: dates[date]!.data.center_letter,
-          wordCount: dates[date]!.data.dictionary.length,
-        })),
-    });
-  } catch (err) {
-    res.status(502).json({ error: err instanceof Error ? err.message : "Spellbee unavailable" });
-  }
+  res.json({ ok: true, words: words.length });
 });
 
 app.post("/api/rooms", async (req, res) => {
   try {
-    const requested = req.body?.mode;
-    const mode: PuzzleMode =
-      requested === "daily" ? "daily" : requested === "archive" ? "archive" : "fresh";
+    const mode: PuzzleMode = req.body?.mode === "daily" ? "daily" : "fresh";
     const room = await store.create({
       mode,
       timeZone: typeof req.body?.timeZone === "string" ? req.body.timeZone : "UTC",
-      date: typeof req.body?.date === "string" ? req.body.date : undefined,
-      spellbeeCode: typeof req.body?.spellbeeCode === "string" ? req.body.spellbeeCode : undefined,
     });
     res.json({
       code: room.code,
       mode: room.puzzle.mode,
       dateKey: room.puzzle.dateKey,
       url: `/r/${room.code}`,
-      spellbeeCode: room.puzzle.code,
     });
   } catch (err) {
-    res.status(502).json({ error: err instanceof Error ? err.message : "Could not load Spellbee hive" });
+    res.status(502).json({ error: err instanceof Error ? err.message : "Could not create a hive" });
   }
 });
 

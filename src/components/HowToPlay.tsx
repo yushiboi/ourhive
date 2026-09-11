@@ -31,11 +31,11 @@ export function HowToPlay({ open, onClose }: { open: boolean; onClose: () => voi
           </li>
           <li>
             <strong className="text-ink">One shared score.</strong> If either of you finds a word, it locks for both
-            of you and shows who got there first.
+            of you and shows who got there first. That’s the whole point — two devices, not one shared screen.
           </li>
           <li>
-            <strong className="text-ink">Hives come from Spellbee.</strong> Today’s puzzle matches their daily, and
-            “another hive” pulls from their published catalog — we don’t invent letter sets.
+            <strong className="text-ink">Hints</strong> show word lengths and starting letters, never the answers.
+            Shuffle is yours alone; the hive stays the same for both of you.
           </li>
         </ol>
       </div>
