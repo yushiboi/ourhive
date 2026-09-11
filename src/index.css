@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --color-cream: #f7f0df;
+  --color-paper: #fff9ee;
+  --color-ink: #1a2e22;
+  --color-honey: #e8b84a;
+  --color-honey-ink: #5a3a08;
+  --color-comb: #f5d76e;
+  --color-pine: #2f5d3a;
+  --color-terracotta: #c45c26;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(232, 184, 74, 0.28), transparent 55%),
+    radial-gradient(900px 400px at 100% 0%, rgba(47, 93, 58, 0.12), transparent 50%),
+    var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.hive-cell polygon:last-of-type {
+  cursor: pointer;
+}
+
+.hive-cell:hover polygon:first-of-type {
+  filter: brightness(1.04);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.shake {
+  animation: shake 0.35s ease;
+}
+
+.pop {
+  animation: pop 0.35s ease;
+}
