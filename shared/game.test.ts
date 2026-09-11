@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   clientCheck,
   isPangram,
+  rankBarProgress,
   rankForScore,
   rankingsFromMax,
   scoreWord,
@@ -42,6 +43,16 @@ describe("ranks", () => {
     assert.equal(rankForScore(1, rankings), "Beginner");
     assert.equal(rankForScore(12, rankings), "Novice");
     assert.equal(rankForScore(380, rankings), "Genius");
+  });
+
+  it("places the rank-bar marker on rank slots and interpolates between them", () => {
+    const rankings = rankingsFromMax(380);
+    assert.equal(rankBarProgress(0, rankings), 0);
+    assert.equal(rankBarProgress(12, rankings), 1 / 8);
+    assert.equal(rankBarProgress(6, rankings), 0.5 / 8);
+    assert.equal(rankBarProgress(274, rankings), 7 / 8);
+    assert.equal(rankBarProgress(380, rankings), 1);
+    assert.equal(rankBarProgress(500, rankings), 1);
   });
 });
 
