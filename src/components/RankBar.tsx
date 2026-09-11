@@ -1,4 +1,4 @@
-import { nextRank } from "@shared/game";
+import { nextRank, rankBarProgress } from "@shared/game";
 import { RANKS, type RoomPublic } from "@shared/types";
 
 /** Marker diameter (`h-9 w-9` = 2.25rem). Travel uses this so the pill stays in-bounds. */
@@ -6,17 +6,12 @@ const MARKER = "2.25rem";
 const MARKER_CENTER = "1.125rem";
 const DOT_INSET = "0.875rem"; // marker center − half of h-2/w-2
 
-function scoreProgress(score: number, geniusScore: number) {
-  if (geniusScore <= 0) return 0;
-  return Math.min(1, Math.max(0, score / geniusScore));
-}
-
 export function RankBar({ room, onOpenRanks }: { room: RoomPublic; onOpenRanks: () => void }) {
   const upcoming = nextRank(room.rank);
   const nextAt = upcoming ? room.rankings[upcoming.key] : room.geniusScore;
   const remaining = Math.max(0, nextAt - room.score);
   const currentIndex = Math.max(0, RANKS.findIndex((rank) => rank.name === room.rank));
-  const progress = scoreProgress(room.score, room.geniusScore);
+  const progress = rankBarProgress(room.score, room.rankings);
   const rankCount = RANKS.length - 1;
   const nearEnd = progress >= 0.9;
 

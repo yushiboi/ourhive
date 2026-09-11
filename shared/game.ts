@@ -40,6 +40,23 @@ export function nextRank(rank: RankName): (typeof RANKS)[number] | null {
   return RANKS[index + 1] ?? null;
 }
 
+/** 0–1 position along evenly spaced rank slots, interpolating toward the next rank. */
+export function rankBarProgress(score: number, rankings: Rankings): number {
+  const slots = RANKS.length - 1;
+  if (slots <= 0) return 0;
+  let index = 0;
+  for (let i = 0; i < RANKS.length; i++) {
+    const entry = RANKS[i]!;
+    if (score >= rankings[entry.key]) index = i;
+  }
+  if (index >= slots) return 1;
+  const currentAt = rankings[RANKS[index]!.key];
+  const nextAt = rankings[RANKS[index + 1]!.key];
+  const span = Math.max(1, nextAt - currentAt);
+  const t = Math.min(1, Math.max(0, (score - currentAt) / span));
+  return (index + t) / slots;
+}
+
 export function hiveLetterSet(center: string, letters: string[]): Set<string> {
   return new Set([center, ...letters]);
 }
