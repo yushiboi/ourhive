@@ -9,6 +9,7 @@ import { HowToPlay } from "@/components/HowToPlay";
 import { Presence } from "@/components/Presence";
 import { RankBar } from "@/components/RankBar";
 import { RankingsPanel } from "@/components/RankingsPanel";
+import { LiveLog } from "@/components/LiveLog";
 import { YesterdayPanel } from "@/components/YesterdayPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,7 +156,7 @@ export function Room() {
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg px-4 py-3 pb-10" onClick={focusInput}>
+    <div className="mx-auto min-h-dvh max-w-5xl px-4 py-3 pb-10 lg:px-6" onClick={focusInput}>
       <header className="flex items-center justify-between gap-2">
         <Link to="/" className="font-display text-xl text-ink">
           Our Hive
@@ -225,7 +226,9 @@ export function Room() {
         <FoundWords room={room} youId={you?.id} />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,26rem)_1fr] lg:items-start">
+      <div>
+      <div className="mt-1">
         <input
           ref={inputRef}
           value={formatWord(draft)}
@@ -282,6 +285,10 @@ export function Room() {
         }}
         onEnter={trySubmit}
       />
+      </div>
+
+      <LiveLog found={room.found} youId={you?.id} />
+      </div>
 
       <HowToPlay open={help} onClose={() => setHelp(false)} />
       <HintPanel open={hints} onClose={() => setHints(false)} hints={room.puzzle.hints} />

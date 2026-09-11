@@ -81,3 +81,18 @@ body {
 .pop {
   animation: pop 0.35s ease;
 }
+
+@keyframes log-in {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.log-in {
+  animation: log-in 0.45s ease;
+}

@@ -16,12 +16,11 @@ function axialToPixel(q: number, r: number, size: number) {
   };
 }
 
-function hexPath(cx: number, cy: number, radius: number): string {
-  const pts = Array.from({ length: 6 }, (_, i) => {
+function hexPoints(cx: number, cy: number, radius: number): string {
+  return Array.from({ length: 6 }, (_, i) => {
     const angle = ((60 * i - 30) * Math.PI) / 180;
     return `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`;
-  });
-  return pts.join(" ");
+  }).join(" ");
 }
 
 type HoneycombProps = {
@@ -32,12 +31,9 @@ type HoneycombProps = {
 };
 
 export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProps) {
-  const size = 48;
-  const radius = 44;
-  const width = size * SQRT3 * 3 + 8;
-  const height = size * 4.2;
-  const ox = width / 2;
-  const oy = height / 2;
+  const size = 50;
+  const radius = 46;
+  const pad = 10;
 
   const cells = [
     { letter: center, q: 0, r: 0, center: true },
@@ -47,21 +43,43 @@ export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProp
     }),
   ];
 
+  const placed = cells.map((cell) => ({ ...cell, ...axialToPixel(cell.q, cell.r, size) }));
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const cell of placed) {
+    for (let i = 0; i < 6; i++) {
+      const angle = ((60 * i - 30) * Math.PI) / 180;
+      const px = cell.x + radius * Math.cos(angle);
+      const py = cell.y + radius * Math.sin(angle);
+      minX = Math.min(minX, px);
+      maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
+    }
+  }
+
+  const width = maxX - minX + pad * 2;
+  const height = maxY - minY + pad * 2;
+  const ox = -minX + pad;
+  const oy = -minY + pad;
+
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="mx-auto w-[min(100%,20.5rem)] select-none"
+      className="mx-auto block w-[min(100%,21rem)] select-none overflow-visible"
       role="group"
       aria-label="Letter hive"
     >
-      {cells.map((cell) => {
-        const { x, y } = axialToPixel(cell.q, cell.r, size);
-        const cx = ox + x;
-        const cy = oy + y;
+      {placed.map((cell) => {
+        const cx = ox + cell.x;
+        const cy = oy + cell.y;
         return (
           <g key={`${cell.q}:${cell.r}:${cell.letter}`} className="hive-cell">
             <polygon
-              points={hexPath(cx, cy, radius)}
+              points={hexPoints(cx, cy, radius)}
               className={cell.center ? "fill-honey" : "fill-cell"}
             />
             <text
@@ -77,7 +95,7 @@ export function Honeycomb({ center, letters, onLetter, disabled }: HoneycombProp
               {cell.letter.toUpperCase()}
             </text>
             <polygon
-              points={hexPath(cx, cy, radius)}
+              points={hexPoints(cx, cy, radius)}
               fill="transparent"
               className="cursor-pointer"
               aria-label={cell.center ? `Center letter ${cell.letter}` : cell.letter}
