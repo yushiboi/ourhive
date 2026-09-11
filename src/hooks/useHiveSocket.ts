@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientMessage, PlayerPublic, RoomPublic, ServerMessage, SubmitError } from "@shared/types";
-import { getPlayerId } from "@/lib/player";
+import { adoptPlayerId, getPlayerId } from "@/lib/player";
 
 export type HiveEvent =
   | { kind: "found"; word: string; points: number; pangram: boolean; byYou: boolean; playerName: string }
@@ -67,6 +67,8 @@ export function useHiveSocket(code: string | undefined, name: string) {
         const msg = JSON.parse(ev.data) as ServerMessage;
         if (msg.type === "pong") return;
         if (msg.type === "room") {
+          playerId.current = msg.you.id;
+          adoptPlayerId(msg.you.id);
           setRoom(msg.room);
           setYou(msg.you);
           setError(null);

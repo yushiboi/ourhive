@@ -215,7 +215,7 @@ export function Room() {
         {room.mode === "daily" ? `Today · ${room.dateKey}` : "Shared hive"}
       </p>
       <div className="mt-2 flex justify-center">
-        <Presence players={room.players} youId={you?.id} />
+        <Presence players={room.players} youId={you?.id} youName={you?.name} />
       </div>
 
       <div className="mt-4">

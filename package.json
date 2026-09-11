@@ -12,7 +12,7 @@
     "dev:client": "vite",
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
-    "test": "tsx --test shared/game.test.ts server/puzzle.test.ts server/room.test.ts",
+    "test": "tsx --test shared/game.test.ts server/puzzle.test.ts server/room.test.ts src/lib/player.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
